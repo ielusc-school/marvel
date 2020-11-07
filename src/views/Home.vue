@@ -27,7 +27,7 @@
                 v-model="email"
                 type="email"
                 class="form-control"
-                placeholder="name">
+                placeholder="e-mail">
             </div>
 
             <div class="form-group">
@@ -45,7 +45,7 @@
                   <span class="input-group-addon">
                     <input type="radio" v-bind:value="statusAtivo" v-model="status">Ativo
                   </span>
-                  <span class="input-group-addon ">
+                  <span class="input-group-addon " style="margin-left: 10px">
                     <input type="radio" v-bind:value="statusInativo" v-model="status"> Inativo
                   </span>
                 </div>
@@ -53,8 +53,15 @@
 
             <div class="col-md-12">
               <button
+                v-if="!edit"
                 @click="savePerson"
                 class="btn btn-primary">Adicionar Pessoa
+              </button>
+
+              <button
+                v-if="edit"
+                @click="updatePerson"
+                class="btn btn-success">Atualizar dados
               </button>
 
             </div>
@@ -66,13 +73,13 @@
           <thead>
             <tr>
               <th>
-                'nome'
+                nome
               </th>
               <th>
-                'email'
+                email
               </th>
               <th>
-                'idade'
+                idade
               </th>
               <th>
                 status
@@ -83,7 +90,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="usuario in usuarios" :key="usuario.id">
+            <tr v-for="(usuario, id) in usuarios" :key="id">
               <td> {{ usuario.name }}</td>
               <td> {{ usuario.email }}</td>
               <td> {{ usuario.age }}</td>
@@ -91,12 +98,12 @@
               <td>
                 <button
                   class="btn btn-warning space-margin"
-                  @click="removePerson(usuario.id)">
+                  @click="getPerson(id)">
                   Editar
                 </button>
                 <button
                   class="btn btn-danger space-margin"
-                  @click="removePerson(usuario.id)">
+                  @click="removePerson(id)">
                   Remover
                 </button>
               </td>
@@ -125,6 +132,8 @@ export default {
       statusAtivo: true,
       statusInativo: false,
       status: false,
+      edit: false,
+      personId: '',
     };
   },
   components: {
@@ -139,6 +148,7 @@ export default {
       this.$http.get(url)
         .then((response) => {
           this.usuarios = response.data;
+          // console.log(Object.keys(response.data));
           console.log(response.data);
         });
     },
@@ -167,11 +177,45 @@ export default {
         });
     },
     removePerson(id) {
-      console.log(id);
-      // ...
+      const url = `/usuarios/${id}.json`;
+      this.$http.delete(url)
+        .then((response) => {
+          this.getPersons();
+          console.log(response.data);
+        });
     },
-    updatePerson(id) {
+    updatePerson() {
+      const url = `/usuarios/${this.personId}.json`;
+
+      const person = {
+        name: this.name,
+        age: this.age,
+        email: this.email,
+        status: this.status,
+      };
+
+      this.$http.put(url, person)
+        .then((response) => {
+          this.edit = false;
+          this.cleanForm();
+          this.getPersons();
+          console.log(response.data);
+        });
+    },
+    getPerson(id) {
       console.log(id);
+
+      const usuario = this.usuarios[id];
+
+      // set values from user
+      this.personId = id;
+      this.name = usuario.name;
+      this.age = usuario.age;
+      this.email = usuario.email;
+      this.status = usuario.status;
+
+      this.edit = true;
+      console.log(this.usuarios[id]);
       // ...
     },
   },
